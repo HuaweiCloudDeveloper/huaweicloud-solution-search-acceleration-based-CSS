@@ -25,7 +25,7 @@ This solution will:
 
 ``` lua
 huaweicloud-solution-search-acceleration-based-CSS
-├── search-acceleration-based-css-new-vpc.tf.json -- Resource orchestration template
+├── search-acceleration-based-css.tf.json -- Resource orchestration template
 ```
 **Getting Started**
 ---------------
