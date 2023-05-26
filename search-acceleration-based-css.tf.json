@@ -1,0 +1,217 @@
+{
+    "terraform": {
+        "required_providers": [
+            {
+                "huaweicloud": {
+                    "source": "huawei.com/provider/huaweicloud",
+                    "version": ">=1.44.1"
+                }
+            }
+        ]
+    },
+    "provider": {
+        "huaweicloud": {
+            "cloud": "myhuaweicloud.com",
+            "endpoints": {
+                "iam": "iam.ap-southeast-3.myhuaweicloud.com",
+                "dns": "dns.ap-southeast-3.myhuaweicloud.com"
+            },
+            "insecure": true,
+            "region": "ap-southeast-3",
+            "auth_url": "https://iam.ap-southeast-3.myhuaweicloud.com/v3"
+        }
+    },
+    "variable": {
+        "vpc_name": {
+            "default": "search_acceleration_based_css_new_vpc_demo",
+            "description": "Virtual Private Cloud (VPC) name. This template uses a newly created VPC and the VPC name must be unique. Value range: 1 to 64 characters, including letters, digits, underscores (_), hyphens (-), and periods (.). The default value is search_acceleration_based_css_new_vpc_demo.",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[\\\\w\\\\.-]{1,64}$\",var.vpc_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "security_group_name": {
+            "default": "search_acceleration_based_css_new_vpc_demo",
+            "description": "Security group name. This template uses a newly created security group. For details about how to set security group rules, see the deployment guide. Value range: 1 to 64 characters, including letters, digits, underscores (_), hyphens (-), and periods (.). The default value is search_acceleration_based_css_new_vpc_demo.",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[\\\\w\\\\.-]{1,64}$\",var.security_group_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "css_name": {
+            "default": "search_css_new_vpc_demo",
+            "description": "CSS name. The value contains 4 to 32 characters, including digits, letters, hyphens (-), and underscores (_), and must start with a letter. The default value is search_css_new_vpc_demo.",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[a-zA-Z][\\\\w-]{3,31}$\",var.css_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "css_flavor": {
+            "default": "ess.spec-4u8g",
+            "description": "CSS specifications. The default value is ess.spec-4u8g (4U8G). For details about how to configure the specifications, see the deployment guide.",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^ess\\\\.spec-(\\\\d{1,2}u\\\\d{1,3}g|ds\\\\.[248]xlarge\\\\.(8|8\\\\.v2)$)\",var.css_flavor))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "css_password": {
+            "default": "",
+            "description": "CSS password. Value range: 8 to 32 characters, including at least three types of the following characters: uppercase letters, lowercase letters, digits, and special characters. The following special characters are allowed: ~!@#$%^*-_=+?,()&",
+            "type": "string",
+            "nullable": false,
+            "sensitive": true
+        },
+        "rds_name": {
+            "default": "search_acceleration_based_css_new_vpc_demo",
+            "description": "RDS database name. The value contains 4 to 64 characters and must start with a letter. It is case sensitive and can contain letters, digits, hyphens (-), and underscores (_). Other special characters are not allowed. The default value is search_acceleration_based_css_new_vpc_demo.",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^[a-zA-Z][a-zA-Z0-9_-]{3,63}$\",var.rds_name))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "rds_flavor": {
+            "default": "rds.mysql.n1.large.4.ha",
+            "description": "MySQL database specifications. For details about how to configure the specifications, see the deployment guide. The default value is rds.mysql.n1.large.4.ha(2U8G).",
+            "type": "string",
+            "nullable": false,
+            "validation": {
+                "condition": "${length(regexall(\"^rds\\\\.mysql\\\\.(n|x)1\\\\.([248]|16){0,1}(large|xlarge)\\\\.[248](\\\\.(ha|rr)){0,1}$\",var.rds_flavor))>0}",
+                "error_message": "Invalid input. Please re-enter."
+            }
+        },
+        "rds_password": {
+            "default": "",
+            "description": "RDS database password. Value range: 8 to 32 characters, including at least three types of the following characters: uppercase letters, lowercase letters, digits, and special characters. The following special characters are allowed: ~!@#$%^*-_=+?,()&",
+            "type": "string",
+            "nullable": false,
+            "sensitive": true
+        }
+    },
+    "data": {
+        "huaweicloud_availability_zones": {
+            "availability_zones": {}
+        }
+    },
+    "resource": {
+        "huaweicloud_vpc": {
+            "vpc": {
+                "cidr": "172.16.0.0/16",
+                "name": "${var.vpc_name}"
+            }
+        },
+        "huaweicloud_vpc_subnet": {
+            "subnet": {
+                "cidr": "172.16.10.0/24",
+                "gateway_ip": "172.16.10.1",
+                "name": "${var.vpc_name}",
+                "primary_dns": "100.125.1.250",
+                "vpc_id": "${huaweicloud_vpc.vpc.id}"
+            }
+        },
+        "huaweicloud_networking_secgroup": {
+            "networking_secgroup": {
+                "name": "${var.security_group_name}"
+            }
+        },
+        "huaweicloud_networking_secgroup_rule": {
+            "allow_ping": {
+                "description": "Allows to test the ECS connectivity with the ping command.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "protocol": "icmp",
+                "remote_ip_prefix": "0.0.0.0/0",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}"
+            },
+            "allow_http": {
+                "description": "Allows to access websites via HTTP.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "ports": 80,
+                "protocol": "tcp",
+                "remote_ip_prefix": "0.0.0.0/0",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}"
+            },
+            "allow_https": {
+                "description": "Allows to access websites via HTTPS.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "ports": 443,
+                "protocol": "tcp",
+                "remote_ip_prefix": "0.0.0.0/0",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}"
+            },
+            "allow_mysql": {
+                "description": "Allows to access the database.",
+                "direction": "ingress",
+                "ethertype": "IPv4",
+                "ports": 3306,
+                "protocol": "tcp",
+                "remote_ip_prefix": "172.16.0.0/16",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}"
+            }
+        },
+        "huaweicloud_css_cluster": {
+            "css_cluster": {
+                "backup_strategy": {
+                    "keep_days": 7,
+                    "prefix": "css-snapshot",
+                    "start_time": "00:00 GMT+08:00"
+                },
+                "engine_version": "7.10.2",
+                "name": "${var.css_name}",
+                "availability_zone": "${data.huaweicloud_availability_zones.availability_zones.names[0]}",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}",
+                "subnet_id": "${huaweicloud_vpc_subnet.subnet.id}",
+                "vpc_id": "${huaweicloud_vpc.vpc.id}",
+                "ess_node_config": {
+                    "flavor": "${var.css_flavor}",
+                    "instance_number": 3,
+                    "volume": {
+                        "size": 100,
+                        "volume_type": "ULTRAHIGH"
+                    }
+                },
+                "password": "${var.css_password}",
+                "security_mode": true
+            }
+        },
+        "huaweicloud_rds_instance": {
+            "rds_instance": {
+                "availability_zone": [
+                    "${data.huaweicloud_availability_zones.availability_zones.names[0]}",
+                    "${data.huaweicloud_availability_zones.availability_zones.names[2]}"
+                ],
+                "backup_strategy": {
+                    "keep_days": 1,
+                    "start_time": "08:00-09:00"
+                },
+                "count": 1,
+                "db": {
+                    "password": "${var.rds_password}",
+                    "type": "MySQL",
+                    "version": "5.7"
+                },
+                "flavor": "${var.rds_flavor}",
+                "ha_replication_mode": "async",
+                "name": "${var.rds_name}",
+                "security_group_id": "${huaweicloud_networking_secgroup.networking_secgroup.id}",
+                "subnet_id": "${huaweicloud_vpc_subnet.subnet.id}",
+                "volume": {
+                    "size": 100,
+                    "type": "CLOUDSSD"
+                },
+                "vpc_id": "${huaweicloud_vpc.vpc.id}"
+            }
+        }
+    }
+}
